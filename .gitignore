@@ -328,3 +328,9 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Cache folder from react
+.cache
+
+# Dist folder from parcel bundle
+/dist/
