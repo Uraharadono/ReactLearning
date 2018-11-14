@@ -1,11 +1,17 @@
 import React from "react";
-import { ANIMALS } from "petfinder-client";
+import pf, { ANIMALS } from "petfinder-client";
+
+const petfinder = pf({
+    key: process.env.API_KEY,
+    secret: process.env.API_SECRET
+});
 
 class SearchParams extends React.Component {
     state = {
         location: "Seattle, WA",
         animal: "",
-        breed: ""
+        breed: "",
+        breeds: []
     };
 
     handleLocationChange = event => {
@@ -15,17 +21,48 @@ class SearchParams extends React.Component {
     };
 
     handleAnimalChange = event => {
+        this.setState(
+            {
+                animal: event.target.value,
+                breed: ""
+            },
+            // ne mogu uraditi da dole na kraju ove funkcije "handleAnimalChange" pozovem ovo getBreeds
+            // jer ovaj setState je wrapan u setTImeout i moze se desiti da se "handleAnimalChange" izvrsi prije poziva
+            // ove funkcije "this.getBreeds"
+            this.getBreeds
+        );
+    };
+
+    handleBreedChange = event => {
         this.setState({
-            animal: event.target.value
+            breed: event.target.value
         });
     };
+
+    getBreeds() {
+        if (this.state.animal) {
+            petfinder.breed.list({ animal: this.state.animal }).then(data => {
+                if (
+                    data.petfinder &&
+                    data.petfinder.breeds &&
+                    Array.isArray(data.petfinder.breeds.breed)
+                ) {
+                    this.setState({
+                        breeds: data.petfinder.breeds.breed
+                    });
+                }
+            });
+        } else {
+            this.setState({ breds: [] });
+        }
+    }
 
     render() {
         return (
             <div className="search-params">
                 <label htmlFor="location">
                     Location
-                    <input
+          <input
                         id="location"
                         value={this.state.location}
                         placeholder="Location"
@@ -34,23 +71,42 @@ class SearchParams extends React.Component {
                 </label>
                 <label htmlFor="animal">
                     Animal
-                    <select
+          <select
                         id="animal"
                         value={this.state.animal}
                         onChange={this.handleAnimalChange}
                         onBlur={this.handleAnimalChange}
                     >
                         <option />
+                        {ANIMALS.map(animal => (
+                            <option key={animal} value={animal}>
+                                {animal}
+                            </option>
+                        ))}
+                    </select>
+                </label>
+                <label htmlFor="breed">
+                    Breed
+                <select
+                        id="breed"
+                        value={this.state.breed}
+                        onChange={this.handleBreedChange}
+                        onBlur={this.handleBreedChange}
+                        disabled={!this.state.breeds}
+                    >
+                        <option value=""></option>
                         {
-                            ANIMALS.map(animal => (
-                                <option key={animal} value={animal}>{animal}</option>
+                            this.state.breeds.map(breed => (
+                                <option key={breed} value={breed}>
+                                    {breed}
+                                </option>
                             ))
                         }
                     </select>
                 </label>
-
+                <button>Submit</button>
             </div>
-        )
+        );
     }
 }
 
