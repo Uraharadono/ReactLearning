@@ -1,13 +1,15 @@
 import React from "react";
 import pf from "petfinder-client";
+import { Consumer } from "./SearchContext";
 import Pet from "./Pet";
+import SearchBox from "./SearchBox";
 
 const petfinder = pf({
     key: process.env.API_KEY,
     secret: process.env.API_SECRET
 });
 
-export default class Results extends React.Component {
+class Results extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -16,29 +18,36 @@ export default class Results extends React.Component {
     }
 
     componentDidMount() {
-        petfinder.pet.find({ output: "full", location: "New York, NY" })
+        this.search();
+    }
+
+    search = () => {
+        petfinder.pet
+            .find({
+                output: "full",
+                location: this.props.searchParams.location,
+                animal: this.props.searchParams.animal,
+                breed: this.props.searchParams.breed
+            })
             .then(data => {
                 let pets;
                 if (data.petfinder.pets != null && data.petfinder.pets.pet != null) {
                     if (Array.isArray(data.petfinder.pets.pet)) {
                         pets = data.petfinder.pets.pet;
-                    }
-                    else {
+                    } else {
                         pets = [data.petfinder.pets.pet];
                     }
-                }
-                else {
+                } else {
                     pets = [];
                 }
 
                 this.setState({
                     pets: pets
-                    // moze i ovako jer su iste rijeci, ali je meni sranje 
+                    // moze i ovako jer su iste rijeci, ali je meni sranje
                     // pets
-                })
-            })
+                });
+            });
     }
-
 
     // handleTitleClick() {
     //   alert("You clicked title.");
@@ -68,37 +77,44 @@ export default class Results extends React.Component {
         // );
         return (
             /* Posto u reactu mora se uvijek sve wrapat u div kad je return u pitanju mogu staviti umjesto div-a 
-            <React.Fragment>
-            ..sadrzaj
-            </React.Fragment>
-            */
+                  <React.Fragment>
+                  ..sadrzaj
+                  </React.Fragment>
+                  */
             <div className="search">
-                {
-                    this.state.pets.map(pet => {
+                <SearchBox search={this.search} />
+                {this.state.pets.map(pet => {
+                    let breed;
 
-                        let breed;
-
-                        if (Array.isArray(pet.breeds.breed)) {
-                            breed = pet.breeds.breed.join(", ");
-                        }
-                        else {
-                            breed = pet.breeds.breed
-                        }
-                        return (
-                            <Pet
-                                key={pet.id}
-                                animal={pet.animal}
-                                name={pet.name}
-                                breed={breed}
-                                media={pet.media}
-                                location={`${pet.contact.city}, ${pet.contact.state}`}
-                                id={pet.id} />
-                        )
-                    })
-                }
+                    if (Array.isArray(pet.breeds.breed)) {
+                        breed = pet.breeds.breed.join(", ");
+                    } else {
+                        breed = pet.breeds.breed;
+                    }
+                    return (
+                        <Pet
+                            key={pet.id}
+                            animal={pet.animal}
+                            name={pet.name}
+                            breed={breed}
+                            media={pet.media}
+                            location={`${pet.contact.city}, ${pet.contact.state}`}
+                            id={pet.id}
+                        />
+                    );
+                })}
             </div>
-        )
+        );
     }
+}
+
+// export default Results;
+export default function ResultsWithContext(props) {
+    return (
+        <Consumer>
+            {context => <Results {...props} searchParams={context} />}
+        </Consumer>
+    );
 }
 
 // const App = () => {
