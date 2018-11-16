@@ -2,7 +2,7 @@ import React from "react";
 import pf from "petfinder-client";
 import { navigate } from "@reach/router"
 import Carousel from "./Carousel";
-
+import Modal from "./Modal";
 
 const petfinder = pf({
     key: process.env.API_KEY,
@@ -12,7 +12,8 @@ const petfinder = pf({
 class Details extends React.Component {
     // ovo je onaj novi fazon sto je on pokazao, stage 3 ili 5, top level class property
     state = {
-        loading: true
+        loading: true,
+        showModal: true
     };
 
     // ovo je kako meni treba da koristim
@@ -23,6 +24,12 @@ class Details extends React.Component {
     //         loading: true
     //     };
     // }
+
+    toggleModal = () => {
+        this.setState({
+            showModal: !this.state.showModal
+        });
+    };
 
     componentDidMount() {
         petfinder.pet.get({
@@ -60,14 +67,33 @@ class Details extends React.Component {
             return <h1>loading...</h1>
         }
         else {
-            const { name, animal, breed, location, description, media } = this.state;
+            const { name, animal, breed, location, description, media, showModal } = this.state;
+            
+            // Ovo je drugi nacin od ovoga sto sam ja iskoristio, ternarni operator
+            // let modal;
+            // if(showModal) modal = <Modal/>
+            // else model = null;
+
             return (
                 <div className="details">
                     <Carousel media={media} />
+                    {/* <div onClick={console.log("click")}> */}
                     <div>
                         <h1>{name}</h1>
                         <h2>{animal} - {breed} - {location}</h2>
+                        <button onClick={this.toggleModal}> Adopt {name}</button>
                         <p>{description}</p>
+                        {
+                            showModal ? (
+                                <Modal>
+                                    <h1>Would you like to adopt {name}</h1>
+                                    <div className="buttons">
+                                        <button onClick={this.toggleModal}>Yes</button>
+                                        <button onClick={this.toggleModal}>No</button>
+                                    </div>
+                                </Modal>
+                            ) : null
+                        }
                     </div>
                 </div>
             )
